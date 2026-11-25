@@ -1,0 +1,9 @@
+[package]
+name = "hw2"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[dependencies]
+candle-core.workspace = true
+common.workspace = true

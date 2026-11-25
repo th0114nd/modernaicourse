@@ -1,0 +1,18 @@
+[package]
+name = "hw4"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[dependencies]
+base64.workspace = true
+candle-core.workspace = true
+hf-hub.workspace = true
+rand.workspace = true
+rustc-hash.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tiktoken-rs.workspace = true
+
+[dev-dependencies]
+common.workspace = true

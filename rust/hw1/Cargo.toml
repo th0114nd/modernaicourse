@@ -1,0 +1,10 @@
+[package]
+name = "hw1"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[dependencies]
+candle-core.workspace = true
+common.workspace = true
+itertools = "0.15.0"

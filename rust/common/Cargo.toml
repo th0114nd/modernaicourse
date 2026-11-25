@@ -1,0 +1,11 @@
+[package]
+name = "common"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[dependencies]
+candle-core.workspace = true
+flate2.workspace = true
+itertools = "0.15.0"
+ureq.workspace = true
