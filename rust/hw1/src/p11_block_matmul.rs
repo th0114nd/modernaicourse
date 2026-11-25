@@ -43,7 +43,6 @@ pub fn add_matmul_44(z: &Tensor, a: &Tensor, b: &Tensor) -> Result<Tensor> {
 ///
 /// # Output
 /// - 2D `f32` tensor of shape `[4m, 4p]` equal to `A B`
-#[allow(unused_variables)]
 pub fn block_matmul(a: &Tensor, b: &Tensor) -> Result<Tensor> {
     // BEGIN YOUR CODE
     let (m, n) = a.dims2()?;
@@ -57,15 +56,15 @@ pub fn block_matmul(a: &Tensor, b: &Tensor) -> Result<Tensor> {
     if !m.is_multiple_of(4) || !n.is_multiple_of(4) || !p.is_multiple_of(4) {
         bail!("bad align")
     }
-    let mut strips = Vec::with_capacity(m >> 2);
+    let mut strips = Vec::with_capacity(m / 2);
     for i in (0..m).step_by(4) {
         let mut row_blocks = Vec::with_capacity(p >> 2);
         for k in (0..p).step_by(4) {
             let mut z = Tensor::zeros((4, 4), a.dtype(), a.device())?;
             for j in (0..n).step_by(4) {
-                let a = a.i(((i..i + 4), (j..j + 4)))?;
-                let b = b.i(((j..j + 4), (k..k + 4)))?;
-                z = add_matmul_44(&z, &a, &b)?;
+                let a_blk = a.i(((i..i + 4), (j..j + 4)))?;
+                let b_blk = b.i(((j..j + 4), (k..k + 4)))?;
+                z = add_matmul_44(&z, &a_blk, &b_blk)?;
             }
             row_blocks.push(z)
         }

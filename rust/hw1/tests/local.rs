@@ -62,7 +62,12 @@ mod local {
         let a = seeded_randn(&[5], 201, &Device::Cpu).unwrap();
         let b = seeded_randn(&[5], 202, &Device::Cpu).unwrap();
         let z = vector_inner_product(&a, &b).unwrap();
-        let expected = (&a * &b).unwrap().sum_all().unwrap().to_scalar::<f32>().unwrap();
+        let expected = (&a * &b)
+            .unwrap()
+            .sum_all()
+            .unwrap()
+            .to_scalar::<f32>()
+            .unwrap();
         assert!(
             (z - expected).abs() <= ATOL + RTOL * expected.abs(),
             "inner product mismatch: actual={z}, expected={expected}"
@@ -77,7 +82,11 @@ mod local {
         let a = seeded_randn(&[5, 4], 301, &Device::Cpu).unwrap();
         let b = seeded_randn(&[4], 302, &Device::Cpu).unwrap();
         let z = matrix_vector_product_1(&a, &b).unwrap();
-        let expected = a.matmul(&b.unsqueeze(1).unwrap()).unwrap().squeeze(1).unwrap();
+        let expected = a
+            .matmul(&b.unsqueeze(1).unwrap())
+            .unwrap()
+            .squeeze(1)
+            .unwrap();
         assert_allclose(&z, &expected, RTOL, ATOL);
 
         let bad = seeded_randn(&[6], 303, &Device::Cpu).unwrap();
@@ -89,7 +98,11 @@ mod local {
         let a = seeded_randn(&[5, 4], 401, &Device::Cpu).unwrap();
         let b = seeded_randn(&[4], 402, &Device::Cpu).unwrap();
         let z = matrix_vector_product_2(&a, &b).unwrap();
-        let expected = a.matmul(&b.unsqueeze(1).unwrap()).unwrap().squeeze(1).unwrap();
+        let expected = a
+            .matmul(&b.unsqueeze(1).unwrap())
+            .unwrap()
+            .squeeze(1)
+            .unwrap();
         assert_allclose(&z, &expected, RTOL, ATOL);
 
         let bad = seeded_randn(&[6], 403, &Device::Cpu).unwrap();
@@ -101,7 +114,13 @@ mod local {
         let a = seeded_randn(&[4, 5], 501, &Device::Cpu).unwrap();
         let b = seeded_randn(&[4], 502, &Device::Cpu).unwrap();
         let z = vector_matrix_product_2(&b, &a).unwrap();
-        let expected = b.unsqueeze(0).unwrap().matmul(&a).unwrap().squeeze(0).unwrap();
+        let expected = b
+            .unsqueeze(0)
+            .unwrap()
+            .matmul(&a)
+            .unwrap()
+            .squeeze(0)
+            .unwrap();
         assert_allclose(&z, &expected, RTOL, ATOL);
 
         let bad = seeded_randn(&[6], 503, &Device::Cpu).unwrap();
@@ -152,8 +171,12 @@ mod local {
         let expected = a.matmul(&b).unwrap();
         assert_allclose(&z, &expected, RTOL, ATOL);
 
-        assert!(batch_matmul(&a, &seeded_randn(&[2, 3, 4, 5], 903, &Device::Cpu).unwrap()).is_err());
-        assert!(batch_matmul(&a, &seeded_randn(&[4, 3, 5, 6], 904, &Device::Cpu).unwrap()).is_err());
+        assert!(
+            batch_matmul(&a, &seeded_randn(&[2, 3, 4, 5], 903, &Device::Cpu).unwrap()).is_err()
+        );
+        assert!(
+            batch_matmul(&a, &seeded_randn(&[4, 3, 5, 6], 904, &Device::Cpu).unwrap()).is_err()
+        );
         assert!(batch_matmul(&a, &seeded_randn(&[3, 5, 6], 905, &Device::Cpu).unwrap()).is_err());
     }
 
