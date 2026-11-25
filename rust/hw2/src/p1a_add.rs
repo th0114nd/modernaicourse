@@ -10,14 +10,16 @@ impl Function for Add {
     #[allow(unused_variables)]
     fn forward(&self, args: &[f64]) -> f64 {
         // BEGIN YOUR CODE
-        todo!()
+        assert_eq!(args.len(), 2);
+        args[0] + args[1]
         // END YOUR CODE
     }
 
     #[allow(unused_variables)]
     fn backward(&self, grad: f64, args: &[f64]) -> Vec<f64> {
         // BEGIN YOUR CODE
-        todo!()
+        assert_eq!(args.len(), 2);
+        vec![grad, grad]
         // END YOUR CODE
     }
 }

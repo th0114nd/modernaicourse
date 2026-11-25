@@ -10,14 +10,16 @@ impl Function for Subtract {
     #[allow(unused_variables)]
     fn forward(&self, args: &[f64]) -> f64 {
         // BEGIN YOUR CODE
-        todo!()
+        assert_eq!(2, args.len());
+        args[0] - args[1]
         // END YOUR CODE
     }
 
     #[allow(unused_variables)]
     fn backward(&self, grad: f64, args: &[f64]) -> Vec<f64> {
         // BEGIN YOUR CODE
-        todo!()
+        assert_eq!(2, args.len());
+        vec![grad, -grad]
         // END YOUR CODE
     }
 }

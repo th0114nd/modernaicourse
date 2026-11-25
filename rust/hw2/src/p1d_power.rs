@@ -24,14 +24,20 @@ impl Function for Power {
     #[allow(unused_variables)]
     fn forward(&self, args: &[f64]) -> f64 {
         // BEGIN YOUR CODE
-        todo!()
+        assert_eq!(1, args.len());
+        args[0].powf(self.d)
         // END YOUR CODE
     }
 
     #[allow(unused_variables)]
     fn backward(&self, grad: f64, args: &[f64]) -> Vec<f64> {
         // BEGIN YOUR CODE
-        todo!()
+        assert_eq!(1, args.len());
+        if self.d == 0.0 {
+            vec![0.0]
+        } else {
+            vec![grad * self.d * args[0].powf(self.d - 1.0)]
+        }
         // END YOUR CODE
     }
 }

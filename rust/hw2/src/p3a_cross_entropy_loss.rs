@@ -1,5 +1,6 @@
 //! Problem 3a: Average cross-entropy loss.
 
+use candle_core::bail;
 use candle_core::{Result, Tensor};
 
 /// Compute the average cross-entropy loss between predicted logits and integer class labels.
@@ -20,6 +21,19 @@ use candle_core::{Result, Tensor};
 #[allow(unused_variables)]
 pub fn cross_entropy_loss(y_pred: &Tensor, y: &Tensor) -> Result<Tensor> {
     // BEGIN YOUR CODE
-    todo!()
+    let (n, k) = y_pred.dims2()?;
+    let np = y.dims1()?;
+    if n != np {
+        bail!("mismatched dims");
+    }
+    let y_unsqueezed = y.unsqueeze(1)?;
+    assert_eq!((n, 1), y_unsqueezed.dims2()?);
+    // y_pred.gather: N x 1; contracting kind of?
+    let gathered = y_pred.gather(&y_unsqueezed, 1)?;
+    let ypred_y = gathered.squeeze(1)?;
+    assert_eq!(n, ypred_y.dims1()?);
+    let denom = y_pred.log_sum_exp(1)?;
+    let per_item_loss = denom.sub(&ypred_y)?;
+    per_item_loss.mean_all()
     // END YOUR CODE
 }

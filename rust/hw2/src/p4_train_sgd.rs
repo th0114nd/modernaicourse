@@ -1,10 +1,8 @@
 //! Problem 4: Minibatch stochastic gradient descent for a linear classifier.
 
-#[allow(unused_imports)]
-use candle_core::{DType, Result, Tensor, Var};
-
-#[allow(unused_imports)]
 use crate::cross_entropy_loss;
+use candle_core::error::Error;
+use candle_core::{bail, DType, Result, Tensor, Var};
 
 /// Train a linear classifier $W \in \mathbb{R}^{k \times n}$ via minibatch SGD
 /// to minimize [`cross_entropy_loss`].
@@ -31,7 +29,6 @@ use crate::cross_entropy_loss;
 ///
 /// # Output
 /// - 2D `f32` tensor of shape `[k, n]` containing the trained linear classifier weights
-#[allow(unused_variables)]
 pub fn train_sgd(
     x: &Tensor,
     y: &Tensor,
@@ -40,6 +37,33 @@ pub fn train_sgd(
     batch_size: usize,
 ) -> Result<Tensor> {
     // BEGIN YOUR CODE
-    todo!()
+    let (all_batch_size, n) = x.dims2()?;
+    let all_batch_size_2 = y.dims1()?;
+    if all_batch_size != all_batch_size_2 {
+        bail!("all batch size mismatch")
+    }
+    if step_size == 0.0 {
+        bail!("bad step size");
+    }
+    if batch_size == 0 {
+        bail!("batch size");
+    }
+    let k = y.max_all()?.to_scalar::<u32>()? + 1;
+    let w = Var::zeros((k as usize, n), DType::F32, x.device())?;
+    for _ in 0..epochs {
+        for start in (0..all_batch_size).step_by(batch_size) {
+            let len = batch_size.min(all_batch_size - start);
+
+            let x_batch = x.narrow(0, start, len)?;
+            let y_batch = y.narrow(0, start, len)?;
+            let wt = w.transpose(0, 1)?;
+            let y_preds = x_batch.matmul(&wt)?;
+            let loss_batch = cross_entropy_loss(&y_preds, &y_batch)?;
+            let grads = loss_batch.backward()?;
+            let g = grads.get(w.as_tensor()).ok_or(Error::msg("no grads get"))?;
+            w.set(&(w.as_tensor() - (g * step_size)?)?)?;
+        }
+    }
+    Ok(w.as_detached_tensor())
     // END YOUR CODE
 }

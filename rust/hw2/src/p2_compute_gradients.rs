@@ -17,6 +17,24 @@ use crate::autograd::Variable;
 #[allow(unused_variables)]
 pub fn compute_gradients(var: &Variable) {
     // BEGIN YOUR CODE
-    todo!()
+    let grad = match var.grad() {
+        None => {
+            var.set_grad(1.0);
+            1.0
+        }
+        Some(grad) => grad,
+    };
+    let Some(func) = var.function() else { return };
+    let parents = var.parents();
+    let parent_scalars: Vec<f64> = parents.iter().map(Variable::value).collect();
+    let parent_derivs = func.backward(grad, &parent_scalars);
+    parents.iter().zip(parent_derivs).for_each(|(p, grad)| {
+        let new_grad = p.grad().unwrap_or(0.0) + grad;
+        p.set_grad(new_grad);
+        p.set_num_children(p.num_children() - 1);
+        if p.num_children() == 0 {
+            compute_gradients(p)
+        }
+    })
     // END YOUR CODE
 }
