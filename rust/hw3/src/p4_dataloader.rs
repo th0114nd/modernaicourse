@@ -1,7 +1,6 @@
 //! Problem 4: Sequential minibatch `DataLoader`.
 
-#[allow(unused_imports)]
-use candle_core::{Result, Tensor};
+use candle_core::{bail, Result, Tensor};
 
 /// Sequential minibatch iterator over a paired `(x, y)` dataset.
 ///
@@ -10,20 +9,15 @@ use candle_core::{Result, Tensor};
 /// `N` is not divisible by `batch_size`). Iterating again starts fresh from index `0`.
 #[derive(Debug, Clone)]
 pub struct DataLoader {
-    #[allow(dead_code)]
     x: Tensor,
-    #[allow(dead_code)]
     y: Tensor,
-    #[allow(dead_code)]
     batch_size: usize,
 }
 
 /// Iterator returned by [`DataLoader::iter`] and `(&loader).into_iter()`.
 #[derive(Debug)]
 pub struct DataLoaderIter<'a> {
-    #[allow(dead_code)]
     loader: &'a DataLoader,
-    #[allow(dead_code)]
     offset: usize,
 }
 
@@ -37,17 +31,30 @@ impl DataLoader {
     /// - `x`: input dataset tensor of shape `[N, ...]`
     /// - `y`: target tensor of shape `[N]`
     /// - `batch_size`: number of examples per minibatch (`>= 1`)
-    #[allow(unused_variables)]
     pub fn new(x: Tensor, y: Tensor, batch_size: usize) -> Result<Self> {
         // BEGIN YOUR CODE
-        todo!()
+        let ns = x.dims();
+        if ns.is_empty() {
+            bail!("empty x dims");
+        }
+        let n = y.dims1()?;
+        if ns[0] != n {
+            bail!("batch size mismatch");
+        }
+        if batch_size == 0 {
+            bail!("empty batch size")
+        }
+        Ok(Self { x, y, batch_size })
         // END YOUR CODE
     }
 
     /// Create a fresh iterator starting at minibatch `0`.
     pub fn iter(&self) -> DataLoaderIter<'_> {
         // BEGIN YOUR CODE
-        todo!()
+        DataLoaderIter {
+            loader: self,
+            offset: 0,
+        }
         // END YOUR CODE
     }
 }
@@ -60,7 +67,19 @@ impl<'a> Iterator for DataLoaderIter<'a> {
     /// Hint: use [`Tensor::narrow`] along dimension `0`.
     fn next(&mut self) -> Option<Self::Item> {
         // BEGIN YOUR CODE
-        todo!()
+        || -> Result<Option<(Tensor, Tensor)>> {
+            let start = self.offset * self.loader.batch_size;
+            self.offset += 1;
+            let n = self.loader.y.dims1()?;
+            if start >= n {
+                return Ok(None);
+            }
+            let len = self.loader.batch_size.min(n - start);
+            let x_b = self.loader.x.narrow(0, start, len)?;
+            let y_b = self.loader.y.narrow(0, start, len)?;
+            Ok(Some((x_b, y_b)))
+        }()
+        .transpose()
         // END YOUR CODE
     }
 }

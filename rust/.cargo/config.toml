@@ -1,0 +1,9 @@
+[target.x86_64-unknown-linux-gnu]
+# Guard test & example binaries against runaway RAM/swap thrashing and infinite loops.
+# Override per-command: RUST_TEST_MEM_MAX=12G RUST_TEST_TIMEOUT=300s cargo test ...
+# Disable completely:   RUST_TEST_NO_LIMIT=1 cargo run --example train_mnist
+runner = [
+  "sh", "-c",
+  'if [ "${RUST_TEST_NO_LIMIT:-0}" = "1" ]; then exec "$@"; fi; mem="${RUST_TEST_MEM_MAX:-4G}"; t="${RUST_TEST_TIMEOUT:-60s}"; if [ -z "${RUST_TEST_SCOPE_ACTIVE:-}" ] && [ -n "${XDG_RUNTIME_DIR:-}" ] && command -v systemd-run >/dev/null 2>&1; then exec systemd-run --user --scope --quiet -p "MemoryMax=$mem" -p MemorySwapMax=0 -p OOMPolicy=kill -- timeout --kill-after=5 "$t" "$@"; elif command -v prlimit >/dev/null 2>&1; then exec prlimit --as="${RUST_TEST_AS_MAX:-8589934592}" -- timeout --kill-after=5 "$t" "$@"; else exec timeout --kill-after=5 "$t" "$@"; fi',
+  "_",
+]

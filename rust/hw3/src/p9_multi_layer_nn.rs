@@ -1,7 +1,7 @@
 //! Problem 9: Arbitrary-depth ReLU neural network (`MultiLayerNN`).
 
 #[allow(unused_imports)]
-use candle_core::{Device, Result, Tensor, Var};
+use candle_core::{bail, Device, Error, Result, Tensor, Var};
 
 use crate::{Linear, Module};
 
@@ -36,7 +36,20 @@ impl MultiLayerNN {
         device: &Device,
     ) -> Result<Self> {
         // BEGIN YOUR CODE
-        todo!()
+        let mut dims = vec![in_dim];
+        dims.extend(hidden_dims);
+        dims.push(out_dim);
+        for dim in dims.iter().copied() {
+            if dim == 0 {
+                bail!("degenerate dim");
+            }
+        }
+        Ok(Self {
+            linears: dims
+                .windows(2)
+                .map(|ds| Linear::new(ds[0], ds[1], device))
+                .collect::<Result<Vec<_>>>()?,
+        })
         // END YOUR CODE
     }
 }
@@ -46,14 +59,24 @@ impl Module for MultiLayerNN {
     #[allow(unused_variables)]
     fn forward(&self, x: &Tensor) -> Result<Tensor> {
         // BEGIN YOUR CODE
-        todo!()
+        let mut h = x.clone();
+        let num_layers = self.linears.len();
+        let (last, early) = self
+            .linears
+            .split_last()
+            .ok_or(Error::msg("need at least one layer"))?;
+        for layer in early {
+            h = layer.forward(&h)?;
+            h = h.relu()?;
+        }
+        last.forward(&h)
         // END YOUR CODE
     }
 
     /// Collect trainable parameters from every `Linear` layer in `self.linears`.
     fn parameters(&self) -> Vec<Var> {
         // BEGIN YOUR CODE
-        todo!()
+        self.linears.iter().flat_map(Module::parameters).collect()
         // END YOUR CODE
     }
 }

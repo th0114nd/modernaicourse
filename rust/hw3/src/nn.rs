@@ -7,10 +7,11 @@
 //! provided [`load_mnist_dataloaders`] and [`train_model`] helpers ported from
 //! `homework/hw3/hw3.py`.
 
-use candle_core::{Device, Result, Tensor, Var, backprop::GradStore};
+use candle_core::{backprop::GradStore, Device, Result, Tensor, Var};
 use common::mnist;
+use tracing;
 
-use crate::{CrossEntropyLoss, DataLoader, SGD, epoch};
+use crate::{epoch, CrossEntropyLoss, DataLoader, SGD};
 
 /// A trainable neural network layer or model (Candle counterpart to `torch.nn.Module`).
 ///
@@ -79,10 +80,17 @@ pub fn train_model<M: Module>(
     for i in 0..n_epochs {
         let (train_loss, train_err) = epoch(&model, train_dataloader, &loss_fn, Some(&mut opt))?;
         let (test_loss, test_err) = epoch(&model, test_dataloader, &loss_fn, None)?;
-        println!(
-            "Epoch {:2}/{n_epochs} | Train Loss: {train_loss:.4}, Train Error: {train_err:.4}, \
-             Test Loss: {test_loss:.4}, Test Error: {test_err:.4}",
-            i + 1
+        tracing::info!(
+            n_epochs,
+            train_loss,
+            train_err,
+            test_loss,
+            test_err,
+            epoch_no = i + 1,
+            "epoch",
+            // "Epoch {:2}/{n_epochs} | Train Loss: {train_loss:.4}, Train Error: {train_err:.4}, \
+            //  Test Loss: {test_loss:.4}, Test Error: {test_err:.4}",
+            // i + 1
         );
     }
     Ok(model)

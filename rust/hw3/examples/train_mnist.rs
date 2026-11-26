@@ -19,11 +19,17 @@
 use std::time::Instant;
 
 use candle_core::{Device, Result};
-use hw3::{
-    Linear, MultiLayerNN, TwoLayerNN, load_mnist_dataloaders, train_model,
-};
+use hw3::{load_mnist_dataloaders, train_model, Linear, MultiLayerNN, TwoLayerNN};
+use tracing_subscriber::{filter::LevelFilter, EnvFilter};
 
 fn main() -> Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::builder()
+                .with_default_directive(LevelFilter::INFO.into())
+                .from_env_lossy(),
+        )
+        .init();
     let args: Vec<String> = std::env::args().collect();
     let kind = args.get(1).map(String::as_str).unwrap_or("two-layer");
     let default_lr = if kind == "linear" { 0.2 } else { 0.3 };
@@ -44,24 +50,26 @@ fn main() -> Result<()> {
         .unwrap_or_else(|| vec![300, 100]);
 
     let device = Device::Cpu;
-    println!("Loading MNIST (batch_size={batch_size})...");
+    tracing::info!("Loading MNIST (batch_size={batch_size})...");
     let (train_loader, test_loader) = load_mnist_dataloaders(batch_size, &device)?;
 
     let start = Instant::now();
     match kind {
         "linear" => {
-            println!("Training Linear(784 -> 10) for {epochs} epochs (lr={lr})...");
+            tracing::info!("Training Linear(784 -> 10) for {epochs} epochs (lr={lr})...");
             let model = Linear::new(784, 10, &device)?;
             let _trained = train_model(model, &train_loader, &test_loader, lr, epochs)?;
         }
         "two-layer" => {
             let hidden = hidden_dims.first().copied().unwrap_or(300);
-            println!("Training TwoLayerNN(784 -> {hidden} -> 10) for {epochs} epochs (lr={lr})...");
+            tracing::info!(
+                "Training TwoLayerNN(784 -> {hidden} -> 10) for {epochs} epochs (lr={lr})..."
+            );
             let model = TwoLayerNN::new(784, hidden, 10, &device)?;
             let _trained = train_model(model, &train_loader, &test_loader, lr, epochs)?;
         }
         "multi" => {
-            println!(
+            tracing::info!(
                 "Training MultiLayerNN(784 -> {:?} -> 10) for {epochs} epochs (lr={lr})...",
                 hidden_dims
             );

@@ -1,7 +1,6 @@
 //! Problem 7: Two-layer ReLU neural network (`TwoLayerNN`).
 
-#[allow(unused_imports)]
-use candle_core::{Device, Result, Tensor, Var};
+use candle_core::{bail, Device, Result, Tensor, Var};
 
 use crate::{Linear, Module};
 
@@ -29,27 +28,35 @@ impl TwoLayerNN {
     /// - `hidden_dim`: hidden layer width
     /// - `out_dim`: output feature dimension
     /// - `device`: Candle device on which to allocate layer weights
-    #[allow(unused_variables)]
     pub fn new(in_dim: usize, hidden_dim: usize, out_dim: usize, device: &Device) -> Result<Self> {
         // BEGIN YOUR CODE
-        todo!()
+        if in_dim == 0 || hidden_dim == 0 || out_dim == 0 {
+            bail!("degenerate dims");
+        }
+        let linear1 = Linear::new(in_dim, hidden_dim, device)?;
+        let linear2 = Linear::new(hidden_dim, out_dim, device)?;
+        Ok(Self { linear1, linear2 })
         // END YOUR CODE
     }
 }
 
 impl Module for TwoLayerNN {
     /// Apply `linear1`, ReLU, then `linear2` to an input tensor of shape `[..., in_dim]`.
-    #[allow(unused_variables)]
     fn forward(&self, x: &Tensor) -> Result<Tensor> {
         // BEGIN YOUR CODE
-        todo!()
+        let h1 = self.linear1.forward(x)?;
+        let h2 = h1.relu()?;
+        let h3 = self.linear2.forward(&h2)?;
+        Ok(h3)
         // END YOUR CODE
     }
 
     /// Return all trainable parameters from `linear1` and `linear2`.
     fn parameters(&self) -> Vec<Var> {
         // BEGIN YOUR CODE
-        todo!()
+        let mut params = self.linear1.parameters();
+        params.extend(self.linear2.parameters());
+        params
         // END YOUR CODE
     }
 }

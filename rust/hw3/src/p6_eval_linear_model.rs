@@ -4,7 +4,7 @@
 use candle_core::{Device, Result};
 
 #[allow(unused_imports)]
-use crate::{Linear, load_mnist_dataloaders, train_model};
+use crate::{load_mnist_dataloaders, train_model, Linear};
 
 /// Train a [`Linear`] classifier (`784 -> 10`) on MNIST and return the trained model.
 ///
@@ -15,6 +15,9 @@ use crate::{Linear, load_mnist_dataloaders, train_model};
 /// with `lr = 0.2` (5–20 epochs comfortably reach ~8% test error).
 pub fn eval_linear_model() -> Result<Linear> {
     // BEGIN YOUR CODE
-    todo!()
+    let device = Device::Cpu;
+    let (train_loader, test_loader) = load_mnist_dataloaders(100, &device)?;
+    let model = Linear::new(28 * 28, 10, &device)?;
+    train_model(model, &train_loader, &test_loader, 0.2, 10)
     // END YOUR CODE
 }

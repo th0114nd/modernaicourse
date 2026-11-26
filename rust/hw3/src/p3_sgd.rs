@@ -1,7 +1,7 @@
 //! Problem 3: Stochastic Gradient Descent (`SGD`) optimizer.
 
 #[allow(unused_imports)]
-use candle_core::{Result, Var, backprop::GradStore};
+use candle_core::{backprop::GradStore, Result, Var};
 
 use crate::nn::Optimizer;
 
@@ -26,10 +26,12 @@ impl SGD {
     /// # Inputs
     /// - `parameters`: `Vec<Var>` — trainable parameters to optimize (e.g. `model.parameters()`)
     /// - `learning_rate`: `f64` — gradient descent step size $\eta$
-    #[allow(unused_variables)]
     pub fn new(parameters: Vec<Var>, learning_rate: f64) -> Self {
         // BEGIN YOUR CODE
-        todo!()
+        Self {
+            params: parameters,
+            learning_rate,
+        }
         // END YOUR CODE
     }
 }
@@ -40,10 +42,15 @@ impl Optimizer for SGD {
     ///
     /// Parameters absent from `grads` (i.e. `grads.get(p.as_tensor())` is `None`) should
     /// be skipped gracefully.
-    #[allow(unused_variables)]
     fn step(&mut self, grads: &GradStore) -> Result<()> {
         // BEGIN YOUR CODE
-        todo!()
+        for p in self.params.iter_mut() {
+            if let Some(g) = grads.get(p.as_tensor()) {
+                let new_t = (p.as_tensor() - self.learning_rate * g)?;
+                p.set(&new_t)?;
+            }
+        }
+        Ok(())
         // END YOUR CODE
     }
 }

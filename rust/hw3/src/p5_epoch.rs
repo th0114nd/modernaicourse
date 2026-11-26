@@ -1,7 +1,7 @@
 //! Problem 5: Single training/evaluation `epoch`.
 
 #[allow(unused_imports)]
-use candle_core::{D, DType, Result, Tensor};
+use candle_core::{bail, DType, Result, Tensor, D};
 
 use crate::nn::{Loss, Module, Optimizer};
 
@@ -31,6 +31,32 @@ where
     I: IntoIterator<Item = Result<(Tensor, Tensor)>>,
 {
     // BEGIN YOUR CODE
-    todo!()
+    let mut total_loss: f64 = 0.0;
+    let mut total_errors = 0.0;
+    let mut count = 0.0;
+    for batch in loader.into_iter() {
+        let (x, y) = batch?;
+        let batch_len = y.dims1()?;
+        count += batch_len as f64;
+        let logits = model.forward(&x)?;
+        let batch_loss = loss_fn.forward(&logits, &y)?;
+        total_loss += (batch_loss.to_scalar::<f32>()? * batch_len as f32) as f64;
+        let batch_errors = logits
+            .argmax(D::Minus1)?
+            .ne(&y)?
+            .to_dtype(DType::F64)?
+            .sum_all()?
+            .to_scalar::<f64>()?;
+        total_errors += batch_errors;
+
+        if let Some(opt) = opt.as_mut() {
+            let grads = batch_loss.backward()?;
+            opt.step(&grads)?;
+        }
+    }
+    if count == 0.0 {
+        bail!("empty epoch");
+    }
+    Ok((total_loss / count, total_errors / count))
     // END YOUR CODE
 }

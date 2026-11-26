@@ -1,10 +1,8 @@
 //! Problem 8: Train and return a two-layer ReLU neural network on MNIST (`eval_two_layer_nn`).
 
-#[allow(unused_imports)]
 use candle_core::{Device, Result};
 
-#[allow(unused_imports)]
-use crate::{TwoLayerNN, load_mnist_dataloaders, train_model};
+use crate::{load_mnist_dataloaders, train_model, TwoLayerNN};
 
 /// Train a [`TwoLayerNN`] on MNIST and return the trained model.
 ///
@@ -16,6 +14,9 @@ use crate::{TwoLayerNN, load_mnist_dataloaders, train_model};
 /// Run tests with `--release` for fast CPU training!
 pub fn eval_two_layer_nn() -> Result<TwoLayerNN> {
     // BEGIN YOUR CODE
-    todo!()
+    let device = Device::Cpu;
+    let (train_loader, test_loader) = load_mnist_dataloaders(100, &device)?;
+    let model = TwoLayerNN::new(784, 300, 10, &device)?;
+    train_model(model, &train_loader, &test_loader, 0.3, 13)
     // END YOUR CODE
 }

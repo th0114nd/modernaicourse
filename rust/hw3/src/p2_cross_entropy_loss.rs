@@ -37,7 +37,9 @@ impl Loss for CrossEntropyLoss {
     #[allow(unused_variables)]
     fn forward(&self, logits: &Tensor, y: &Tensor) -> Result<Tensor> {
         // BEGIN YOUR CODE
-        todo!()
+        let y = y.unsqueeze(1)?;
+        let gathered = logits.gather(&y, 1)?.squeeze(1)?;
+        logits.log_sum_exp(1)?.sub(&gathered)?.mean_all()
         // END YOUR CODE
     }
 }
