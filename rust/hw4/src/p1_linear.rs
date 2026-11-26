@@ -1,7 +1,6 @@
 //! Problem 1: `Linear` layer (no bias).
 
-#[allow(unused_imports)]
-use candle_core::{DType, Device, Result, Tensor, Var};
+use candle_core::{bail, DType, Device, Result, Tensor, Var};
 
 /// A linear (fully connected) layer without bias, implementing $f(X) = X W^T$.
 ///
@@ -29,7 +28,12 @@ impl Linear {
     #[allow(unused_variables)]
     pub fn new(in_dim: usize, out_dim: usize, device: &Device) -> Result<Self> {
         // BEGIN YOUR CODE
-        todo!()
+        if in_dim == 0 || out_dim == 0 {
+            bail!("degenerate dims");
+        }
+        Ok(Self {
+            weight: Var::zeros((out_dim, in_dim), DType::F32, device)?,
+        })
         // END YOUR CODE
     }
 
@@ -43,7 +47,7 @@ impl Linear {
     #[allow(unused_variables)]
     pub fn forward(&self, x: &Tensor) -> Result<Tensor> {
         // BEGIN YOUR CODE
-        todo!()
+        x.broadcast_matmul(&self.weight.t()?)
         // END YOUR CODE
     }
 }

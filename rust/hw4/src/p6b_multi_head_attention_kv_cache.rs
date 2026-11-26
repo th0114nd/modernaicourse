@@ -1,10 +1,10 @@
 //! Problem 6b: Multi-head attention with KV caching.
 
 #[allow(unused_imports)]
-use candle_core::{DType, Device, Result, Tensor};
+use candle_core::{bail, DType, Device, Result, Tensor};
 
 #[allow(unused_imports)]
-use crate::{Linear, self_attention};
+use crate::{self_attention, Linear};
 
 /// Multi-head self-attention with a pre-allocated KV cache for fast autoregressive decoding.
 ///
@@ -48,10 +48,22 @@ impl MultiHeadAttentionKVCache {
     /// - `n_heads`: number of attention heads
     /// - `max_cache_size`: maximum sequence length stored in `k_cache` / `v_cache`
     /// - `device`: Candle device on which to allocate weights and caches
-    #[allow(unused_variables)]
     pub fn new(dim: usize, n_heads: usize, max_cache_size: usize, device: &Device) -> Result<Self> {
         // BEGIN YOUR CODE
-        todo!()
+        if dim == 0 || n_heads == 0 || max_cache_size == 0 || !dim.is_multiple_of(n_heads) {
+            bail!("bad input");
+        }
+        Ok(Self {
+            wq: Linear::new(dim, dim, device)?,
+            wk: Linear::new(dim, dim, device)?,
+            wv: Linear::new(dim, dim, device)?,
+            wp: Linear::new(dim, dim, device)?,
+            k_cache: Tensor::zeros((1, max_cache_size, dim), DType::F32, device)?,
+            v_cache: Tensor::zeros((1, max_cache_size, dim), DType::F32, device)?,
+            dim,
+            n_heads,
+            max_cache_size,
+        })
         // END YOUR CODE
     }
 
@@ -75,7 +87,47 @@ impl MultiHeadAttentionKVCache {
         use_kv_cache: bool,
     ) -> Result<Tensor> {
         // BEGIN YOUR CODE
-        todo!()
+        // - When `use_kv_cache == true`:
+        //   1. Project `k = self.wk.forward(x)?` and `v = self.wv.forward(x)?` for the new tokens.
+        //   2. Write `k` and `v` into `self.k_cache` and `self.v_cache` at positions
+        //      `seq_pos .. seq_pos + seq_len` (hint: `Tensor::slice_assign`).
+        //   3. Slice the full cached keys and values `0 .. seq_pos + seq_len` (hint: `Tensor::narrow`)
+        //      for multi-head attention against the new queries `q`.
+        let (batch, seq_len, dim) = x.dims3()?;
+        if dim != self.dim {
+            bail!("dim mismatch");
+        }
+        let head_dim = self.dim / self.n_heads;
+        let new_dims = &[batch, seq_len, self.n_heads, head_dim];
+        if use_kv_cache {
+            if batch != 1 {
+                bail!("bad batch");
+            }
+            // k_cache: Tensor::zeros((1, max_cache_size, dim), DType::F32, device)?,
+            // k: [1, seq_len, dim]
+            let k = self.wk.forward(x)?;
+            let v = self.wv.forward(x)?;
+            let target = &[0..1, seq_pos..seq_pos + seq_len, 0..dim];
+            self.k_cache = self.k_cache.slice_assign(target, &k)?;
+            self.v_cache = self.v_cache.slice_assign(target, &v)?;
+            let sa = {
+                let q = self.wq.forward(x)?.reshape(new_dims)?.transpose(1, 2)?;
+                let k = self.k_cache.narrow(1, 0, seq_pos + seq_len)?;
+                let v = self.v_cache.narrow(1, 0, seq_pos + seq_len)?;
+                self_attention(&q, &k, &v, mask)?
+            };
+        }
+        let sa = {
+            let q = self.wq.forward(x)?.reshape(new_dims)?.transpose(1, 2)?;
+            let k = self.wk.forward(x)?.reshape(new_dims)?.transpose(1, 2)?;
+            let v = self.wv.forward(x)?.reshape(new_dims)?.transpose(1, 2)?;
+            self_attention(&q, &k, &v, mask)?
+        };
+        self.wp.forward(
+            &sa.transpose(1, 2)?
+                .contiguous()?
+                .reshape(&[batch, seq_len, dim])?,
+        )
         // END YOUR CODE
     }
 }

@@ -1,10 +1,8 @@
 //! Problem 6a: Multi-head attention (without KV caching).
 
-#[allow(unused_imports)]
-use candle_core::{Device, Result, Tensor};
+use candle_core::{bail, Device, Result, Tensor};
 
-#[allow(unused_imports)]
-use crate::{Linear, self_attention};
+use crate::{self_attention, Linear};
 
 /// Multi-head self-attention without KV caching.
 ///
@@ -39,7 +37,20 @@ impl MultiHeadAttention {
     #[allow(unused_variables)]
     pub fn new(dim: usize, n_heads: usize, device: &Device) -> Result<Self> {
         // BEGIN YOUR CODE
-        todo!()
+        if dim == 0 || n_heads == 0 {
+            bail!("degeneracy");
+        }
+        if !dim.is_multiple_of(n_heads) {
+            bail!("dim heads alignment");
+        }
+        Ok(Self {
+            wq: Linear::new(dim, dim, device)?,
+            wk: Linear::new(dim, dim, device)?,
+            wv: Linear::new(dim, dim, device)?,
+            wp: Linear::new(dim, dim, device)?,
+            dim,
+            n_heads,
+        })
         // END YOUR CODE
     }
 
@@ -62,7 +73,23 @@ impl MultiHeadAttention {
         use_kv_cache: bool,
     ) -> Result<Tensor> {
         // BEGIN YOUR CODE
-        todo!()
+        let (batch, seq_len, dim) = x.dims3()?;
+        if dim != self.dim {
+            bail!("dim mismatch");
+        }
+        let head_dim = self.dim / self.n_heads;
+        let new_dims = &[batch, seq_len, self.n_heads, head_dim];
+        let sa = {
+            let q = self.wq.forward(x)?.reshape(new_dims)?.transpose(1, 2)?;
+            let k = self.wk.forward(x)?.reshape(new_dims)?.transpose(1, 2)?;
+            let v = self.wv.forward(x)?.reshape(new_dims)?.transpose(1, 2)?;
+            self_attention(&q, &k, &v, mask)?
+        };
+        self.wp.forward(
+            &sa.transpose(1, 2)?
+                .contiguous()?
+                .reshape(&[batch, seq_len, dim])?,
+        )
         // END YOUR CODE
     }
 }

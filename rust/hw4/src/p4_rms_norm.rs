@@ -1,7 +1,7 @@
 //! Problem 4: RMSNorm (Root Mean Square Layer Normalization).
 
 #[allow(unused_imports)]
-use candle_core::{D, DType, Device, Result, Tensor, Var};
+use candle_core::{bail, DType, Device, Error, Result, Tensor, Var, D};
 
 /// Root Mean Square Layer Normalization:
 ///
@@ -30,7 +30,14 @@ impl RMSNorm {
     #[allow(unused_variables)]
     pub fn new(dim: usize, eps: f64, device: &Device) -> Result<Self> {
         // BEGIN YOUR CODE
-        todo!()
+        if dim == 0 {
+            bail!("degenerate dim");
+        }
+
+        Ok(Self {
+            eps,
+            weight: Var::ones(dim, DType::F32, device)?,
+        })
         // END YOUR CODE
     }
 
@@ -44,7 +51,14 @@ impl RMSNorm {
     #[allow(unused_variables)]
     pub fn forward(&self, x: &Tensor) -> Result<Tensor> {
         // BEGIN YOUR CODE
-        todo!()
-        // END YOUR CODE
+        let denom = x
+            .powf(2.0)?
+            .mean_keepdim(D::Minus1)?
+            .affine(1.0, self.eps)?
+            .sqrt()?
+            .recip()?;
+        let scale = denom.broadcast_mul(self.weight.as_tensor())?;
+        let scale_dims = scale.dims();
+        x * scale
     }
 }

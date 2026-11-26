@@ -1,7 +1,6 @@
 //! Problem 3: SiLU (Sigmoid Linear Unit) activation function.
 
-#[allow(unused_imports)]
-use candle_core::{Result, Tensor};
+use candle_core::{DType, Result, Tensor};
 
 /// Compute the SiLU (Sigmoid Linear Unit) activation function element-wise:
 ///
@@ -15,9 +14,8 @@ use candle_core::{Result, Tensor};
 ///
 /// # Output
 /// Tensor of the same shape as `x`.
-#[allow(unused_variables)]
 pub fn silu(x: &Tensor) -> Result<Tensor> {
     // BEGIN YOUR CODE
-    todo!()
+    x / (x.neg()?.exp()?.affine(1.0, 1.0)?)
     // END YOUR CODE
 }

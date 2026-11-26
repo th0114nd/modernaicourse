@@ -1,7 +1,6 @@
 //! Problem 2: `Embedding` layer.
 
-#[allow(unused_imports)]
-use candle_core::{DType, Device, Result, Tensor, Var};
+use candle_core::{bail, DType, Device, Result, Tensor, Var};
 
 /// An embedding lookup table that maps integer token indices to dense vectors.
 ///
@@ -29,7 +28,12 @@ impl Embedding {
     #[allow(unused_variables)]
     pub fn new(num_tokens: usize, dim: usize, device: &Device) -> Result<Self> {
         // BEGIN YOUR CODE
-        todo!()
+        if num_tokens == 0 || dim == 0 {
+            bail!("degenerate dim/tokens");
+        }
+        Ok(Self {
+            weight: Var::zeros((num_tokens, dim), DType::F32, device)?,
+        })
         // END YOUR CODE
     }
 
@@ -43,7 +47,12 @@ impl Embedding {
     #[allow(unused_variables)]
     pub fn forward(&self, y: &Tensor) -> Result<Tensor> {
         // BEGIN YOUR CODE
-        todo!()
+        let y_flat = y.flatten_all()?;
+        let y_indexed = self.weight.index_select(&y_flat, 0)?;
+        let mut shape = y.dims().to_vec();
+        let (_, dims) = self.weight.dims2()?;
+        shape.push(dims);
+        y_indexed.reshape(shape)
         // END YOUR CODE
     }
 }
