@@ -17,6 +17,6 @@ pub fn eval_two_layer_nn() -> Result<TwoLayerNN> {
     let device = Device::Cpu;
     let (train_loader, test_loader) = load_mnist_dataloaders(100, &device)?;
     let model = TwoLayerNN::new(784, 300, 10, &device)?;
-    train_model(model, &train_loader, &test_loader, 0.3, 13)
+    train_model(model, &train_loader, &test_loader, 0.3, 20)
     // END YOUR CODE
 }
